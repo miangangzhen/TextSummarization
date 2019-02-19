@@ -36,5 +36,6 @@ class EncoderLayer(tf.layers.Layer):
         old_h = tf.concat(axis=1, values=[fw_st.h, bw_st.h])  # Concatenation of fw and bw state
         new_c = self.dropout(self.reduce_c(old_c))
         new_h = self.dropout(self.reduce_h(old_h))
-        inputs["dec_in_state"] = tf.contrib.rnn.LSTMStateTuple(new_c, new_h)
+        inputs["dec_in_state"] = tf.nn.rnn_cell.LSTMStateTuple(new_c, new_h)
+
         return inputs

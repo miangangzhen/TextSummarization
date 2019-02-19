@@ -1,8 +1,8 @@
 import tensorflow as tf
 from tensorflow.contrib.estimator import multi_label_head
 from tensorflow.contrib.layers import xavier_initializer
-from tensorflow.python.estimator.run_config import RunConfig
 
+from networks.decoder import DecoderLayer
 from networks.embedding import EmbeddingLayer
 from networks.encoder import EncoderLayer
 
@@ -12,24 +12,10 @@ def model_fn(features, labels, mode:tf.estimator.ModeKeys, params):
 
     with tf.variable_scope("rlex", initializer=xavier_initializer()) as scope:
 
-        # # encoder part
-        # enc_batch = features.get("enc_batch")
-        # enc_lens = features.get("enc_lens")
-        # enc_padding_mask = features.get("enc_padding_mask")
-        # if params.pointer_gen:
-        #     enc_batch_extend_vocab = features.get("enc_batch_extend_vocab")
-        #     max_art_oovs = features.get("max_art_oovs")
-        #
-        # # decoder part
-        # dec_batch = features.get("dec_batch")
-        # target_batch = labels
-        # dec_padding_mask = features.get("dec_padding_mask")
-        # if mode == tf.estimator.ModeKeys.PREDICT and params.coverage:
-        #     prev_coverage = features.get("prev_coverage")
-
         layers = []
         layers.append(EmbeddingLayer(params))
         layers.append(EncoderLayer(params))
+        layers.append(DecoderLayer(params, mode=mode))
 
         logits = features
         for layer in layers:
@@ -41,6 +27,8 @@ def model_fn(features, labels, mode:tf.estimator.ModeKeys, params):
                 print("list of: {}".format(value[0].shape))
             elif isinstance(value, tf.nn.rnn_cell.LSTMStateTuple):
                 print(value)
+            elif value is None:
+                print(None)
             else:
                 print(value.shape)
 

@@ -1,7 +1,7 @@
 import tensorflow as tf
 import parameters
 from estimator_config import estimator_cfg
-from input import InputFunction
+from input_manager import InputFunction
 from model import model_fn
 
 
