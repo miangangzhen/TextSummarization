@@ -19,15 +19,15 @@ class EmbeddingLayer(tf.layers.Layer):
 
         if not self.params.embedding_file:
             embedding_other = self.add_variable(
-                name="embedding_other"
-                , shape=[self.params.feature_voc_file_len - 1, self.params.embedding_size]
+                name="embedding_voc"
+                , shape=[self.params.feature_voc_file_len - 2, self.params.embedding_size]
                 , initializer=tf.random_uniform_initializer(-1, 1)
             )
 
         else:
             embedding_other = self.add_variable(
-                name="embedding_other",
-                shape=[self.params.feature_voc_file_len - 1, self.params.embedding_size],
+                name="embedding_voc",
+                shape=[self.params.feature_voc_file_len - 2, self.params.embedding_size],
                 initializer=WordEmbeddingInitializer(
                     self.params.embedding_file, include_word=False, vector_length=self.params.embedding_size
                 )
@@ -44,21 +44,13 @@ class EmbeddingLayer(tf.layers.Layer):
             tmp = tf.slice(self.embedding, [0, 0], [4, -1])
             print("embedding is \r\n {}".format(tmp))
 
-        self.feature_lookup_table = index_table_from_file(
-            vocabulary_file=self.params.feature_voc_file,
-            num_oov_buckets=self.num_oov_buckets,
-            vocab_size=self.params.feature_voc_file_len,
-            default_value=1,
-            key_dtype=tf.string,
-            name='feature_index_lookup')
         self.built = True
 
     def call(self, inputs, **kwargs):
-        enc_id = self.feature_lookup_table.lookup(inputs[self.params.enc_input_name])
-        dec_id = self.feature_lookup_table.lookup(inputs[self.params.dec_input_name])
+        enc_id = inputs[self.params.enc_input_name]
+        dec_id = inputs[self.params.dec_input_name]
 
         inputs["enc_mask"] = tf.cast(tf.abs(tf.sign(enc_id)), tf.float32)
-        inputs["enc_length"] = tf.cast(tf.reduce_sum(inputs["enc_mask"], -1), tf.int32)
         inputs["dec_mask"] = tf.cast(tf.abs(tf.sign(dec_id)), tf.float32)
 
         enc_embedding = tf.nn.embedding_lookup(self.embedding, enc_id)

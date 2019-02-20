@@ -5,6 +5,7 @@ from tensorflow.contrib.layers import xavier_initializer
 from networks.decoder import DecoderLayer
 from networks.embedding import EmbeddingLayer
 from networks.encoder import EncoderLayer
+from networks.projection import ProjectionLayer
 
 
 def model_fn(features, labels, mode:tf.estimator.ModeKeys, params):
@@ -16,6 +17,7 @@ def model_fn(features, labels, mode:tf.estimator.ModeKeys, params):
         layers.append(EmbeddingLayer(params))
         layers.append(EncoderLayer(params))
         layers.append(DecoderLayer(params, mode=mode))
+        layers.append(ProjectionLayer(params))
 
         logits = features
         for layer in layers:

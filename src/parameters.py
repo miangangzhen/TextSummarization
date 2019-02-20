@@ -49,7 +49,8 @@ def get_hps():
     hps_dict["feature_voc_file"] = os.path.join(hps_dict["data_dir"], "vocab.txt")
     assert tf.gfile.Exists(hps_dict["feature_voc_file"]), "Vocab_file doesn't exist: {}".format(hps_dict["feature_voc_file"])
 
-    hps_dict["feature_voc_file_len"] = get_file_size(hps_dict["feature_voc_file"])
+    # <pad>, <start>, <end>, vocabs..., <unk>
+    hps_dict["feature_voc_file_len"] = 4 + get_file_size(hps_dict["feature_voc_file"])
 
     hps_dict["enc_input_name"] = "enc_input"
     hps_dict["dec_input_name"] = "dec_input"

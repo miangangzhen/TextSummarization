@@ -25,7 +25,7 @@ class EncoderLayer(tf.layers.Layer):
 
     def call(self, inputs, **kwargs):
         encoder_inputs = inputs[self.params.enc_input_name]
-        enc_len = inputs["enc_length"]
+        enc_len = inputs["enc_len"]
         (encoder_outputs, (fw_st, bw_st)) = tf.nn.bidirectional_dynamic_rnn(self.cell_fw, self.cell_bw, encoder_inputs,
                                                                             dtype=tf.float32, sequence_length=enc_len,
                                                                             swap_memory=True)
