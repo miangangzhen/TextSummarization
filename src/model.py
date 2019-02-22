@@ -5,20 +5,23 @@ from tensorflow.contrib.layers import xavier_initializer
 from networks.decoder import DecoderLayer
 from networks.embedding import EmbeddingLayer
 from networks.encoder import EncoderLayer
+from networks.loss import LossLayer
 from networks.projection import ProjectionLayer
 
 
 def model_fn(features, labels, mode:tf.estimator.ModeKeys, params):
     tf.logging.info('Building graph...')
 
-    with tf.variable_scope("rlex", initializer=xavier_initializer()) as scope:
+    with tf.variable_scope("pointer_generator", initializer=xavier_initializer()) as scope:
 
         layers = []
         layers.append(EmbeddingLayer(params))
         layers.append(EncoderLayer(params))
         layers.append(DecoderLayer(params, mode=mode))
         layers.append(ProjectionLayer(params))
+        layers.append(LossLayer(params, mode=mode))
 
+        features["target"] = labels
         logits = features
         for layer in layers:
             logits = layer(logits)

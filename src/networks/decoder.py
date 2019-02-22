@@ -3,7 +3,7 @@ from tensorflow.contrib.layers import xavier_initializer
 
 
 class DecoderLayer(tf.layers.Layer):
-    def __init__(self, params, mode:tf.estimator.ModeKeys, dtype=tf.float32, name="encoder"):
+    def __init__(self, params, mode:tf.estimator.ModeKeys, dtype=tf.float32, name="decoder"):
         super(DecoderLayer, self).__init__(True, name, dtype)
         self.params = params
         self.mode = mode
