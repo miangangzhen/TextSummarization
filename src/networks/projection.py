@@ -23,7 +23,7 @@ class ProjectionLayer(tf.layers.Layer):
 
         # For pointer-generator model, calc final distribution from copy distribution and vocabulary distribution
         if self.params.pointer_gen:
-            max_art_oovs = inputs["article_oovs"].shape.as_list()[-1]
+            max_art_oovs = tf.shape(inputs["article_oovs"])[1]
             final_dists = self._calc_final_dist(vocab_dists, inputs["attn_dists"], inputs["p_gens"], max_art_oovs, inputs["enc_input_extend_vocab"])
         else:  # final distribution is just vocabulary distribution
             final_dists = vocab_dists

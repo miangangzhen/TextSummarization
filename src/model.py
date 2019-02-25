@@ -1,5 +1,4 @@
 import tensorflow as tf
-from tensorflow.contrib.estimator import multi_label_head
 from tensorflow.contrib.layers import xavier_initializer
 
 from networks.decoder import DecoderLayer
@@ -37,12 +36,26 @@ def model_fn(features, labels, mode:tf.estimator.ModeKeys, params):
             else:
                 print(value.shape)
 
-        def train_op_fn(loss):
-            train_op = tf.train.AdamOptimizer(learning_rate=params.learning_rate) \
-                .minimize(loss, global_step=tf.train.get_global_step())
-            return train_op
-        head = multi_label_head(params.nClasses, weight_column=params.weightColName, thresholds=[0.3, 0.5, 0.6, 0.7])
-        spec = head.create_estimator_spec(
-            features, mode, logits, labels=labels, train_op_fn=train_op_fn)
-        return spec
+        if mode == tf.estimator.ModeKeys.TRAIN:
+            # loss of the model
+            loss_to_minimize = logits.get("total_loss") if params.coverage else logits["loss"]
+            tvars = tf.trainable_variables()
+            gradients = tf.gradients(loss_to_minimize, tvars, aggregation_method=tf.AggregationMethod.EXPERIMENTAL_TREE)
 
+            # Clip the gradients
+            grads, global_norm = tf.clip_by_global_norm(gradients, params.max_grad_norm)
+            tf.summary.scalar('global_norm', global_norm)
+
+            # Apply adagrad optimizer
+            optimizer = tf.train.AdagradOptimizer(params.lr, initial_accumulator_value=params.adagrad_init_acc)
+            with tf.device("/gpu:0"):
+                train_op = optimizer.apply_gradients(list(zip(grads, tvars)), global_step=tf.train.get_global_step(),
+                                                           name='train_step')
+
+            return tf.estimator.EstimatorSpec(
+            mode=mode,
+            loss=loss_to_minimize,
+            train_op=train_op)
+
+        else:
+            return None
