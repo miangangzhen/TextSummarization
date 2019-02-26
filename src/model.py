@@ -1,6 +1,5 @@
 import tensorflow as tf
 from tensorflow.contrib.layers import xavier_initializer
-
 from networks.decoder import DecoderLayer
 from networks.embedding import EmbeddingLayer
 from networks.encoder import EncoderLayer
@@ -25,16 +24,16 @@ def model_fn(features, labels, mode:tf.estimator.ModeKeys, params):
         for layer in layers:
             logits = layer(logits)
 
-        for key, value in logits.items():
-            print(key)
-            if isinstance(value, list):
-                print("list of: {}".format(value[0].shape))
-            elif isinstance(value, tf.nn.rnn_cell.LSTMStateTuple):
-                print(value)
-            elif value is None:
-                print(None)
-            else:
-                print(value.shape)
+        # for key, value in logits.items():
+        #     print(key)
+        #     if isinstance(value, list):
+        #         print("list of: {}".format(value[0].shape))
+        #     elif isinstance(value, tf.nn.rnn_cell.LSTMStateTuple):
+        #         print(value)
+        #     elif value is None:
+        #         print(None)
+        #     else:
+        #         print(value.shape)
 
         if mode == tf.estimator.ModeKeys.TRAIN:
             # loss of the model
@@ -53,9 +52,9 @@ def model_fn(features, labels, mode:tf.estimator.ModeKeys, params):
                                                            name='train_step')
 
             return tf.estimator.EstimatorSpec(
-            mode=mode,
-            loss=loss_to_minimize,
-            train_op=train_op)
+                mode=mode,
+                loss=loss_to_minimize,
+                train_op=train_op)
 
         else:
             return None

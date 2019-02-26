@@ -39,7 +39,7 @@ class LossLayer(tf.layers.Layer):
                 with tf.variable_scope('coverage_loss'):
                     inputs["_coverage_loss"] = self._coverage_loss(inputs["attn_dists"], inputs["dec_mask"])
                     tf.summary.scalar('coverage_loss', inputs["_coverage_loss"])
-                    inputs["total_loss"] = self._loss + self.params.cov_loss_wt * inputs["_coverage_loss"]
+                    inputs["total_loss"] = inputs["loss"] + self.params.cov_loss_wt * inputs["_coverage_loss"]
                 tf.summary.scalar('total_loss', inputs["total_loss"])
 
         return inputs

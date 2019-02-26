@@ -98,6 +98,10 @@ class DecoderLayer(tf.layers.Layer):
         p_gens = []
         state = inputs["dec_in_state"]
         coverage = inputs.get("prev_coverage", None)
+        if coverage is not None: # for beam search mode with coverage
+            # reshape from (batch_size, attn_length) to (batch_size, attn_len, 1, 1)
+            coverage = tf.expand_dims(tf.expand_dims(coverage,2),3)
+
         context_vector = tf.zeros([batch_size, self.attention_vec_size])
         if self.mode == tf.estimator.ModeKeys.PREDICT:
             # Re-calculate the context vector from the previous step so that we can pass it through a linear layer with this step's input to get a modified version of the input

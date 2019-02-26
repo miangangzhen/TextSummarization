@@ -38,6 +38,7 @@ tf.flags.DEFINE_float('cov_loss_wt', 1.0, 'Weight of coverage loss (lambda in th
 tf.flags.DEFINE_integer('run_step', 8000, 'how many step run')
 tf.flags.DEFINE_integer('check_steps', 1000, 'checkpoint保存频次')
 tf.flags.DEFINE_string("embedding_file", "", "预训练的词向量文件")
+tf.flags.DEFINE_boolean('convert_to_coverage_model', False, 'Convert a non-coverage model to a coverage model. Turn this on and run in train mode. Your current training model will be copied to a new version (same name with _cov_init appended) that will be ready to run with coverage flag turned on, for the coverage training stage.')
 
 
 def get_hps():
