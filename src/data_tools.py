@@ -15,6 +15,6 @@ def csv2json(in_path, out_path):
 
 
 if __name__ == "__main__":
-    in_path = "F:/chinese_summarization/train/*.csv"
-    out_path = "F:/chinese_summarization/train/train.json"
+    in_path = "F:/chinese_summarization/predict/*.csv"
+    out_path = "F:/chinese_summarization/predict/predict.json"
     csv2json(in_path, out_path)

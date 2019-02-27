@@ -7,17 +7,28 @@ from networks.loss import LossLayer
 from networks.projection import ProjectionLayer
 
 
-def model_fn(features, labels, mode:tf.estimator.ModeKeys, params):
+def tile_for_predict(features):
+    features["enc_input"] = tf.reshape(features["enc_input"], [1, -1])
+    features["enc_len"] = tf.reshape(features["enc_len"], [-1])
+    features["enc_input_extend_vocab"] = tf.reshape(features["enc_input_extend_vocab"], [1, -1])
+    features["article_oovs"] = tf.reshape(features["article_oovs"], [1, -1])
+    return features
+
+
+def model_fn(features, labels, mode: tf.estimator.ModeKeys, params):
     tf.logging.info('Building graph...')
+    if mode == tf.estimator.ModeKeys.PREDICT:
+        features = tile_for_predict(features)
 
     with tf.variable_scope("pointer_generator", initializer=xavier_initializer()) as scope:
 
         layers = []
         layers.append(EmbeddingLayer(params))
         layers.append(EncoderLayer(params))
-        layers.append(DecoderLayer(params, mode=mode))
-        layers.append(ProjectionLayer(params))
-        layers.append(LossLayer(params, mode=mode))
+        if mode != tf.estimator.ModeKeys.PREDICT:
+            layers.append(DecoderLayer(params, mode=mode))
+            layers.append(ProjectionLayer(params))
+            layers.append(LossLayer(params, mode=mode))
 
         features["target"] = labels
         logits = features
@@ -56,5 +67,14 @@ def model_fn(features, labels, mode:tf.estimator.ModeKeys, params):
                 loss=loss_to_minimize,
                 train_op=train_op)
 
+        elif mode == tf.estimator.ModeKeys.PREDICT:
+            return tf.estimator.EstimatorSpec(
+                mode=mode,
+                predictions={
+                    "enc_states": logits["enc_states"],
+                    "dec_in_state_c": logits["dec_in_state"].c,
+                    "dec_in_state_h": logits["dec_in_state"].h
+                }
+            )
         else:
             return None

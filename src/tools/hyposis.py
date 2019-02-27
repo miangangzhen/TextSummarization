@@ -4,7 +4,7 @@
 class Hypothesis(object):
     """Class to represent a hypothesis during beam search. Holds all the information needed for the hypothesis."""
 
-    def __init__(self, tokens, log_probs, state, attn_dists, p_gens, coverage):
+    def __init__(self, tokens, log_probs, state_c, state_h, attn_dists, p_gens, coverage):
         """Hypothesis constructor.
 
         Args:
@@ -17,7 +17,8 @@ class Hypothesis(object):
         """
         self.tokens = tokens
         self.log_probs = log_probs
-        self.state = state
+        self.state_c = state_c
+        self.state_h = state_h
         self.attn_dists = attn_dists
         self.p_gens = p_gens
         self.coverage = coverage

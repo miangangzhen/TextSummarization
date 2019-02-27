@@ -48,16 +48,15 @@ class EmbeddingLayer(tf.layers.Layer):
 
     def call(self, inputs, **kwargs):
         enc_id = inputs[self.params.enc_input_name]
-        dec_id = inputs[self.params.dec_input_name]
-
         inputs["enc_mask"] = tf.cast(tf.abs(tf.sign(enc_id)), tf.float32)
-        inputs["dec_mask"] = tf.cast(tf.abs(tf.sign(dec_id)), tf.float32)
-
         enc_embedding = tf.nn.embedding_lookup(self.embedding, enc_id)
-        dec_embedding_list = tf.unstack(tf.nn.embedding_lookup(self.embedding, dec_id), axis=1)
-
         inputs[self.params.enc_input_name] = enc_embedding
-        inputs[self.params.dec_input_name] = dec_embedding_list
+
+        if self.params.mode == tf.estimator.ModeKeys.TRAIN:
+            dec_id = inputs[self.params.dec_input_name]
+            inputs["dec_mask"] = tf.cast(tf.abs(tf.sign(dec_id)), tf.float32)
+            dec_embedding_list = tf.unstack(tf.nn.embedding_lookup(self.embedding, dec_id), axis=1)
+            inputs[self.params.dec_input_name] = dec_embedding_list
 
         if tf.executing_eagerly():
             print("sentences_ids shape\r\n {}".format(enc_id.shape))

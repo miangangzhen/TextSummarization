@@ -1,6 +1,7 @@
 import json
 import os
 import tensorflow as tf
+import numpy as np
 
 
 class InputFunction(object):
@@ -33,6 +34,39 @@ class InputFunction(object):
         else:
             raise ValueError("mode must be train/eval/infer")
 
+    def prepare_data_for_train(self, data_set):
+        return data_set.map(lambda x: tf.py_func(self.parse, [x], Tout=[
+            tf.int32, tf.int32, tf.int32, tf.int32, tf.int32, tf.int32, tf.string])) \
+            .map(lambda enc_id, dec_id, tar_id, enc_len, dec_len, enc_input_extend_vocab, article_oovs: ({
+                                                                                                             "enc_input": enc_id,
+                                                                                                             "dec_input": dec_id,
+                                                                                                             "enc_len": enc_len,
+                                                                                                             "dec_len": dec_len,
+                                                                                                             "enc_input_extend_vocab": enc_input_extend_vocab,
+                                                                                                             "article_oovs": article_oovs},
+                                                                                                         tar_id)) \
+            .padded_batch(self.params.batch_size,
+                          padded_shapes=self.padded_shapes,
+                          padding_values=self.padded_values)
+
+    def prepare_data_for_predict(self, data_set):
+        padded_shapes = self.padded_shapes[0]
+        padded_shapes.pop("dec_input")
+        padded_shapes.pop("dec_len")
+
+        padded_values = self.padded_values[0]
+        padded_values.pop("dec_input")
+        padded_values.pop("dec_len")
+
+        return data_set.map(lambda x: tf.py_func(self.parse_predict, [x], Tout=[
+            tf.int32, tf.int32, tf.int32, tf.string])).map(
+            lambda enc_id, enc_len, enc_input_extend_vocab, article_oovs:{
+                    "enc_input": enc_id,
+                    "enc_len": enc_len,
+                    "enc_input_extend_vocab": enc_input_extend_vocab,
+                    "article_oovs": article_oovs
+            })
+
     def input_fn(self, mode: tf.estimator.ModeKeys):
         data_dir = self.get_data_dir(mode)
         file_paths = tf.gfile.Glob(os.path.join(data_dir, "*.json"))
@@ -40,22 +74,16 @@ class InputFunction(object):
 
         if mode == tf.estimator.ModeKeys.TRAIN:
             data_set = data_set.repeat(None).shuffle(buffer_size=20 * 1000)
+            data_set = self.prepare_data_for_train(data_set)
 
         elif mode == tf.estimator.ModeKeys.EVAL:
             data_set = data_set.repeat(1)
+            data_set = self.prepare_data_for_train(data_set)
+        else:
+            data_set = data_set.repeat(1)
+            data_set = self.prepare_data_for_predict(data_set)
 
-        data_set = data_set.map(lambda x: tf.py_func(self.parse, [x], Tout=[
-                    tf.int32, tf.int32, tf.int32, tf.int32, tf.int32, tf.int32, tf.string])) \
-                .map(lambda enc_id, dec_id, tar_id, enc_len, dec_len, enc_input_extend_vocab, article_oovs: ({
-                        "enc_input": enc_id,
-                        "dec_input": dec_id,
-                        "enc_len": enc_len,
-                        "dec_len": dec_len,
-                        "enc_input_extend_vocab": enc_input_extend_vocab,
-                        "article_oovs": article_oovs}, tar_id))\
-                .padded_batch(self.params.batch_size,
-                              padded_shapes=self.padded_shapes,
-                              padding_values=self.padded_values)
+
         return data_set
 
     def parse(self, raw):
@@ -87,6 +115,23 @@ class InputFunction(object):
         article_oovs = article_oovs if len(article_oovs) else [""]
 
         return enc_id, dec_id, tar_id, enc_len, dec_len, enc_input_extend_vocab, article_oovs
+
+    def parse_predict(self, raw):
+        d = json.loads(raw.decode("utf-8"))
+
+        enc = d["content"].replace("\n", "").split(" ")[:self.params.max_enc_steps]
+        enc_id = [self.word2id(x) for x in enc]
+        enc_len = len(enc_id)
+
+        # If using pointer-generator mode, we need to store some extra info
+        enc_input_extend_vocab = []
+        article_oovs = []
+        if self.params.pointer_gen:
+            enc_input_extend_vocab, article_oovs = self.content2id(enc)
+
+        article_oovs = article_oovs if len(article_oovs) else [""]
+
+        return enc_id, enc_len, enc_input_extend_vocab, article_oovs
 
     def title2id(self, title, article_oovs):
         ids = []

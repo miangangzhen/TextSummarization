@@ -56,5 +56,9 @@ def get_hps():
     hps_dict["enc_input_name"] = "enc_input"
     hps_dict["dec_input_name"] = "dec_input"
 
+    # in decode mode, run only one step
+    if hps_dict["mode"]  == tf.estimator.ModeKeys.PREDICT:
+        hps_dict["max_dec_steps"] = 1
+
     return namedtuple("HParams", list(hps_dict.keys()))(**hps_dict)
 
