@@ -7,6 +7,7 @@ from networks.loss import LossLayer
 from networks.projection import ProjectionLayer
 
 
+# 用reshape将shape从unknown变为 [1, seq_len]
 def tile_for_predict(features):
     features["enc_input"] = tf.reshape(features["enc_input"], [1, -1])
     features["enc_len"] = tf.reshape(features["enc_len"], [-1])
@@ -35,17 +36,6 @@ def model_fn(features, labels, mode: tf.estimator.ModeKeys, params):
         for layer in layers:
             logits = layer(logits)
 
-        # for key, value in logits.items():
-        #     print(key)
-        #     if isinstance(value, list):
-        #         print("list of: {}".format(value[0].shape))
-        #     elif isinstance(value, tf.nn.rnn_cell.LSTMStateTuple):
-        #         print(value)
-        #     elif value is None:
-        #         print(None)
-        #     else:
-        #         print(value.shape)
-
         if mode == tf.estimator.ModeKeys.TRAIN:
             # loss of the model
             loss_to_minimize = logits.get("total_loss") if params.coverage else logits["loss"]
@@ -58,8 +48,7 @@ def model_fn(features, labels, mode: tf.estimator.ModeKeys, params):
 
             # Apply adagrad optimizer
             optimizer = tf.train.AdagradOptimizer(params.lr, initial_accumulator_value=params.adagrad_init_acc)
-            with tf.device("/gpu:0"):
-                train_op = optimizer.apply_gradients(list(zip(grads, tvars)), global_step=tf.train.get_global_step(),
+            train_op = optimizer.apply_gradients(list(zip(grads, tvars)), global_step=tf.train.get_global_step(),
                                                            name='train_step')
 
             return tf.estimator.EstimatorSpec(
@@ -73,7 +62,12 @@ def model_fn(features, labels, mode: tf.estimator.ModeKeys, params):
                 predictions={
                     "enc_states": logits["enc_states"],
                     "dec_in_state_c": logits["dec_in_state"].c,
-                    "dec_in_state_h": logits["dec_in_state"].h
+                    "dec_in_state_h": logits["dec_in_state"].h,
+                    "enc_padding_mask": logits["enc_mask"],
+                    "enc_input_extend_vocab": logits["enc_input_extend_vocab"],
+                    "article_oovs": logits["article_oovs"]
+                    # "p_gens": logits["p_gens"],
+                    # "coverage": logits["coverage"]
                 }
             )
         else:

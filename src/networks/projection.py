@@ -30,6 +30,7 @@ class ProjectionLayer(tf.layers.Layer):
 
         inputs["final_dists"] = final_dists
         inputs["vocab_scores"] = vocab_scores
+        inputs["max_art_oovs"] = max_art_oovs
         return inputs
 
     def _calc_final_dist(self, vocab_dists, attn_dists, p_gens, max_art_oovs, enc_input_extend_vocab):
