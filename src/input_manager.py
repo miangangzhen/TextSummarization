@@ -8,8 +8,11 @@ class InputFunction(object):
     def __init__(self, params):
         self.params = params
         self.vocab = {}
+        self._id_to_word = {}
         for i, word in enumerate(["<pad>", "<start>", "<end>"] + tf.gfile.GFile(self.params.feature_voc_file).readlines() + ["<unk>"]):
-            self.vocab[word.strip()] = i
+            word = word.strip()
+            self.vocab[word] = i
+            self._id_to_word[i] = word
         self.padded_shapes = ({"enc_input": [None],
                                "dec_input":[self.params.max_dec_steps],
                                "enc_len": [],
@@ -67,7 +70,7 @@ class InputFunction(object):
                     "article_oovs": article_oovs
             })
 
-    def input_fn(self, mode: tf.estimator.ModeKeys):
+    def input_fn(self, mode: tf.estimator.ModeKeys, limit=None):
         data_dir = self.get_data_dir(mode)
         file_paths = tf.gfile.Glob(os.path.join(data_dir, "*.json"))
         data_set = tf.data.TextLineDataset(file_paths, buffer_size=10 * 1024 * 1024)
@@ -80,7 +83,8 @@ class InputFunction(object):
             data_set = data_set.repeat(1)
             data_set = self.prepare_data_for_train(data_set)
         else:
-            data_set = data_set.repeat(1)
+            limit = -1 if limit == None else limit
+            data_set = data_set.repeat(1).take(limit)
             data_set = self.prepare_data_for_predict(data_set)
 
 
@@ -170,3 +174,16 @@ class InputFunction(object):
         if not id:
             id = self.vocab.get("<unk>")
         return id
+
+    def outputids2words(self, id_list, article_oovs):
+        end_id = self.vocab.get("<end>")
+        words = []
+        for i in id_list:
+            if i == end_id:
+                break
+            w = self._id_to_word.get(i, None)
+            if w is None:
+                article_oov_idx = i - len(self.vocab)
+                w = "__" + article_oovs[article_oov_idx].decode("utf-8") + "__"
+            words.append(w)
+        return words
