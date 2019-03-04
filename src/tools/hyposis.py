@@ -38,7 +38,8 @@ class Hypothesis(object):
         """
         return Hypothesis(tokens = self.tokens + [token],
                           log_probs = self.log_probs + [log_prob],
-                          state = state,
+                          state_c = state[0],
+                          state_h = state[1],
                           attn_dists = self.attn_dists + [attn_dist],
                           p_gens = self.p_gens + [p_gen],
                           coverage = coverage)

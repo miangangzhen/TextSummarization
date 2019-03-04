@@ -28,7 +28,7 @@ def model_fn(features, labels, mode: tf.estimator.ModeKeys, params):
         layers.append(EncoderLayer(params))
         if mode != tf.estimator.ModeKeys.PREDICT:
             layers.append(DecoderLayer(params, mode=mode))
-            layers.append(ProjectionLayer(params))
+            layers.append(ProjectionLayer(params, mode=mode))
             layers.append(LossLayer(params, mode=mode))
 
         features["target"] = labels

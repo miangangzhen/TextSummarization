@@ -2,9 +2,10 @@ import tensorflow as tf
 from tensorflow.contrib.layers import xavier_initializer
 
 class ProjectionLayer(tf.layers.Layer):
-    def __init__(self, params, dtype=tf.float32, name="projection"):
+    def __init__(self, params, mode, dtype=tf.float32, name="projection"):
         super(ProjectionLayer, self).__init__(True, name, dtype)
         self.params = params
+        self.mode = mode
 
     def build(self, _):
         self.proj = tf.layers.Dense(self.params.feature_voc_file_len,
@@ -27,6 +28,14 @@ class ProjectionLayer(tf.layers.Layer):
             final_dists = self._calc_final_dist(vocab_dists, inputs["attn_dists"], inputs["p_gens"], max_art_oovs, inputs["enc_input_extend_vocab"])
         else:  # final distribution is just vocabulary distribution
             final_dists = vocab_dists
+
+        if self.mode == tf.estimator.ModeKeys.PREDICT:
+            # We run decode beam search mode one decoder step at a time
+            assert len(final_dists) == 1  # final_dists is a singleton list containing shape (batch_size, extended_vsize)
+            final_dists = final_dists[0]
+            topk_probs, inputs["topk_ids"] = tf.nn.top_k(final_dists,
+                                                     self.params.batch_size * 2)  # take the k largest probs. note batch_size=beam_size in decode mode
+            inputs["topk_log_probs"] = tf.log(topk_probs)
 
         inputs["final_dists"] = final_dists
         inputs["vocab_scores"] = vocab_scores
