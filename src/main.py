@@ -42,18 +42,18 @@ if __name__ == "__main__":
     tf.logging.set_verbosity(tf.logging.INFO)
 
     # infer mode
-    tf.flags.FLAGS.mode = "infer"
-    tf.flags.FLAGS.batch_size = 4
+    # tf.flags.FLAGS.mode = "infer"
+    # tf.flags.FLAGS.batch_size = 4
 
     # train mode
-    # tf.flags.FLAGS.mode = "train"
+    tf.flags.FLAGS.mode = "train"
 
     # parameters
     tf.flags.FLAGS.data_dir = "F:/chinese_summarization"
-    tf.flags.FLAGS.max_enc_steps = 50
-    tf.flags.FLAGS.max_dec_steps = 10
+    tf.flags.FLAGS.max_enc_steps = 70
+    tf.flags.FLAGS.max_dec_steps = 20
     tf.flags.FLAGS.model_dir = "../model/"
-    tf.flags.FLAGS.coverage = True
+    # tf.flags.FLAGS.coverage = True
 
     # only switch model from non-coverage to coverage
     # tf.flags.FLAGS.convert_to_coverage_model = True

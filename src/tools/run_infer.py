@@ -25,7 +25,7 @@ def run_infer(input_wrapper, hps_for_predict, estimator):
     tf.logging.info('Loading checkpoint %s', ckpt_state.model_checkpoint_path)
     saver.restore(sess, ckpt_state.model_checkpoint_path)
 
-    for encode_result in estimator.predict(lambda: input_wrapper.input_fn(tf.estimator.ModeKeys.PREDICT, limit=200)):
+    for encode_result in estimator.predict(lambda: input_wrapper.input_fn(tf.estimator.ModeKeys.PREDICT)):
         hyps = [Hypothesis(tokens=[input_wrapper.word2id("<start>")],
                            log_probs=[0.0],
                            state_c=encode_result["dec_in_state_c"],
@@ -103,4 +103,4 @@ def run_infer(input_wrapper, hps_for_predict, estimator):
         decoded_words = input_wrapper.outputids2words(output_ids, encode_result["article_oovs"])
 
         decoded_output = ' '.join(decoded_words)
-        print(decoded_output)
+        tf.logging.info("decode output: {}\n".format(decoded_output))

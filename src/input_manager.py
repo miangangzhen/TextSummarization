@@ -1,7 +1,6 @@
 import json
 import os
 import tensorflow as tf
-import numpy as np
 
 
 class InputFunction(object):
@@ -19,7 +18,7 @@ class InputFunction(object):
                                "dec_len":[],
                                "enc_input_extend_vocab": [None],
                                "article_oovs": [None]
-                               }, [None])
+                               }, [self.params.max_dec_steps])
         self.padded_values = ({"enc_input": 0,
                                "dec_input": 0,
                                "enc_len": 0,
@@ -50,7 +49,7 @@ class InputFunction(object):
                                                                                                          tar_id)) \
             .padded_batch(self.params.batch_size,
                           padded_shapes=self.padded_shapes,
-                          padding_values=self.padded_values)
+                          padding_values=self.padded_values).prefetch(self.params.batch_size * 10)
 
     def prepare_data_for_predict(self, data_set):
         padded_shapes = self.padded_shapes[0]
@@ -124,6 +123,7 @@ class InputFunction(object):
         d = json.loads(raw.decode("utf-8"))
 
         enc = d["content"].replace("\n", "").split(" ")[:self.params.max_enc_steps]
+        tf.logging.info("origin article: {}".format("".join(enc)))
         enc_id = [self.word2id(x) for x in enc]
         enc_len = len(enc_id)
 
