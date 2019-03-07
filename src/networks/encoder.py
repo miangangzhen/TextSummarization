@@ -19,7 +19,8 @@ class EncoderLayer(tf.layers.Layer):
                                         kernel_initializer=xavier_initializer(), trainable=self.trainable)
         self.reduce_h = tf.layers.Dense(self.params.hidden_dim, activation=tf.nn.relu, use_bias=True,
                                         kernel_initializer=xavier_initializer(), trainable=self.trainable)
-        self.dropout = tf.layers.Dropout(rate=self.params.dropout)
+        if self.trainable:
+            self.dropout = tf.layers.Dropout(rate=self.params.dropout)
 
         self.built = True
 
@@ -34,8 +35,11 @@ class EncoderLayer(tf.layers.Layer):
 
         old_c = tf.concat(axis=1, values=[fw_st.c, bw_st.c])  # Concatenation of fw and bw cell
         old_h = tf.concat(axis=1, values=[fw_st.h, bw_st.h])  # Concatenation of fw and bw state
-        new_c = self.dropout(self.reduce_c(old_c))
-        new_h = self.dropout(self.reduce_h(old_h))
+        new_c = self.reduce_c(old_c)
+        new_h = self.reduce_h(old_h)
+        if self.trainable:
+            new_c = self.dropout(new_c)
+            new_h = self.dropout(new_h)
         inputs["dec_in_state"] = tf.nn.rnn_cell.LSTMStateTuple(new_c, new_h)
 
         return inputs
