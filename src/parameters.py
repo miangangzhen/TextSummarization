@@ -45,6 +45,8 @@ def get_hps():
     FLAGS = tf.flags.FLAGS
     hps_dict = {}
     for key, val in FLAGS.__flags.items():
+        if key == "?":
+            continue
         hps_dict[key] = val._value
 
     hps_dict["feature_voc_file"] = os.path.join(hps_dict["data_dir"], "vocab.txt")
@@ -56,5 +58,6 @@ def get_hps():
     hps_dict["enc_input_name"] = "enc_input"
     hps_dict["dec_input_name"] = "dec_input"
 
+    print(hps_dict)
     return namedtuple("HParams", list(hps_dict.keys()))(**hps_dict)
 

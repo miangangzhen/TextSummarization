@@ -40,6 +40,7 @@ if __name__ == "__main__":
 
     # setting log level
     tf.logging.set_verbosity(tf.logging.INFO)
+    tf.flags.FLAGS.check_steps = 100
 
     # infer mode
     # tf.flags.FLAGS.mode = "infer"

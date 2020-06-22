@@ -131,6 +131,7 @@ class DecoderLayer(tf.layers.Layer):
                 with tf.variable_scope('calculate_pgen'):
                     # Tensor shape (batch_size, 1)
                     p_gen = self.linear_proj3(tf.concat([context_vector, state.c, state.h, x], axis=1))
+                    tf.summary.histogram('p_gen', p_gen)
                     p_gen = tf.sigmoid(p_gen)
                     p_gens.append(p_gen)
 

@@ -38,15 +38,15 @@ class InputFunction(object):
 
     def prepare_data_for_train(self, data_set):
         return data_set.map(lambda x: tf.py_func(self.parse, [x], Tout=[
-            tf.int32, tf.int32, tf.int32, tf.int32, tf.int32, tf.int32, tf.string])) \
+            tf.int64, tf.int64, tf.int64, tf.int64, tf.int64, tf.int64, tf.string])) \
             .map(lambda enc_id, dec_id, tar_id, enc_len, dec_len, enc_input_extend_vocab, article_oovs: ({
-                                                                                                             "enc_input": enc_id,
-                                                                                                             "dec_input": dec_id,
-                                                                                                             "enc_len": enc_len,
-                                                                                                             "dec_len": dec_len,
-                                                                                                             "enc_input_extend_vocab": enc_input_extend_vocab,
+                                                                                                             "enc_input": tf.to_int32(enc_id),
+                                                                                                             "dec_input": tf.to_int32(dec_id),
+                                                                                                             "enc_len": tf.to_int32(enc_len),
+                                                                                                             "dec_len": tf.to_int32(dec_len),
+                                                                                                             "enc_input_extend_vocab": tf.to_int32(enc_input_extend_vocab),
                                                                                                              "article_oovs": article_oovs},
-                                                                                                         tar_id)) \
+                                                                                                         tf.to_int32(tar_id))) \
             .padded_batch(self.params.batch_size,
                           padded_shapes=self.padded_shapes,
                           padding_values=self.padded_values).prefetch(self.params.batch_size * 10)
@@ -61,11 +61,11 @@ class InputFunction(object):
         padded_values.pop("dec_len")
 
         return data_set.map(lambda x: tf.py_func(self.parse_predict, [x], Tout=[
-            tf.int32, tf.int32, tf.int32, tf.string])).map(
+            tf.int64, tf.int64, tf.int64, tf.string])).map(
             lambda enc_id, enc_len, enc_input_extend_vocab, article_oovs:{
-                    "enc_input": enc_id,
-                    "enc_len": enc_len,
-                    "enc_input_extend_vocab": enc_input_extend_vocab,
+                    "enc_input": tf.to_int32(enc_id),
+                    "enc_len": tf.to_int32(enc_len),
+                    "enc_input_extend_vocab": tf.to_int32(enc_input_extend_vocab),
                     "article_oovs": article_oovs
             })
 
